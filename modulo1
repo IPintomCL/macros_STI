@@ -59,26 +59,26 @@ Sub IrRegistro()
     On Error GoTo 0
 End Sub
 
-' Subrutina para ir a la hoja CONSUMO
-Sub IrConsumo()
+' Subrutina para ir a la hoja CARGAS
+Sub IrCarga()
     On Error Resume Next
-    Sheets("CONSUMO").Select
+    Sheets("CARGAS").Select
     If Err.Number <> 0 Then
-        MsgBox "No se pudo encontrar la hoja 'CONSUMO'.", vbExclamation, "Error"
+        MsgBox "No se pudo encontrar la hoja 'CARGAS'.", vbExclamation, "Error"
     End If
     On Error GoTo 0
 End Sub
 
 ' Subrutina para grabar datos
 Sub Grabar()
-    Dim wsRegistro As Worksheet, wsConsumo As Worksheet
+    Dim wsRegistro As Worksheet, wsCarga As Worksheet
     Dim lastRow As Long, i As Long
     Dim rut As String, rutValido As Boolean
     Dim foundCell As Range
     
     ' Definir las hojas de trabajo
     Set wsRegistro = ThisWorkbook.Worksheets("REGISTRO")
-    Set wsConsumo = ThisWorkbook.Worksheets("CONSUMO")
+    Set wsCarga = ThisWorkbook.Worksheets("CARGAS")
     
     ' Obtener y validar el RUT del registro actual
     rut = wsRegistro.Range("RUT").Value
@@ -88,36 +88,36 @@ Sub Grabar()
         Exit Sub
     End If
     
-    ' Buscar si el RUT ya existe en la hoja CONSUMO
-    Set foundCell = wsConsumo.Range("A:A").Find(What:=rut, LookIn:=xlValues, LookAt:=xlWhole)
+    ' Buscar si el RUT ya existe en la hoja CARGAS
+    Set foundCell = wsCarga.Range("A:A").Find(What:=rut, LookIn:=xlValues, LookAt:=xlWhole)
     
     ' Si se encuentra el RUT, eliminar la fila existente
     If Not foundCell Is Nothing Then
         foundCell.EntireRow.Delete
     End If
     
-    ' Encontrar la última fila en la hoja CONSUMO
-    lastRow = wsConsumo.Cells(wsConsumo.Rows.Count, "A").End(xlUp).Row + 1
+    ' Encontrar la última fila en la hoja CARGAS
+    lastRow = wsCarga.Cells(wsCarga.Rows.Count, "A").End(xlUp).Row + 1
     
-    ' Copiar los valores de REGISTRO a CONSUMO
-    wsConsumo.Cells(lastRow, "A").Value = wsRegistro.Range("RUT").Value
-    wsConsumo.Cells(lastRow, "B").Value = wsRegistro.Range("NOMBRES").Value
-    wsConsumo.Cells(lastRow, "C").Value = wsRegistro.Range("APELLIDO_PATERNO").Value
-    wsConsumo.Cells(lastRow, "D").Value = wsRegistro.Range("APELLIDO_MATERNO").Value
-    wsConsumo.Cells(lastRow, "E").Value = wsRegistro.Range("REGION").Value
-    wsConsumo.Cells(lastRow, "F").Value = wsRegistro.Range("COMUNA").Value
-    wsConsumo.Cells(lastRow, "G").Value = wsRegistro.Range("CARGO").Value
-    wsConsumo.Cells(lastRow, "H").Value = wsRegistro.Range("JARDIN").Value
-    wsConsumo.Cells(lastRow, "I").Value = wsRegistro.Range("CORREO").Value
-    wsConsumo.Cells(lastRow, "J").Value = wsRegistro.Range("FONO").Value
-    wsConsumo.Cells(lastRow, "K").Value = wsRegistro.Range("_5_K").Value
-    wsConsumo.Cells(lastRow, "L").Value = wsRegistro.Range("_11_K").Value
-    wsConsumo.Cells(lastRow, "M").Value = wsRegistro.Range("_15_K").Value
-    wsConsumo.Cells(lastRow, "N").Value = wsRegistro.Range("_45_K").Value
-    wsConsumo.Cells(lastRow, "O").Value = wsRegistro.Range("MONTO").Value
-    wsConsumo.Cells(lastRow, "P").Value = wsRegistro.Range("USUARIO").Value
-    wsConsumo.Cells(lastRow, "Q").Value = wsRegistro.Range("OBSERVACIONES").Value
-    wsConsumo.Cells(lastRow, "R").Value = Now() ' Fecha y hora actual
+    ' Copiar los valores de REGISTRO a CARGAS
+    wsCarga.Cells(lastRow, "A").Value = wsRegistro.Range("RUT").Value
+    wsCarga.Cells(lastRow, "B").Value = wsRegistro.Range("NOMBRES").Value
+    wsCarga.Cells(lastRow, "C").Value = wsRegistro.Range("APELLIDO_PATERNO").Value
+    wsCarga.Cells(lastRow, "D").Value = wsRegistro.Range("APELLIDO_MATERNO").Value
+    wsCarga.Cells(lastRow, "E").Value = wsRegistro.Range("REGION").Value
+    wsCarga.Cells(lastRow, "F").Value = wsRegistro.Range("COMUNA").Value
+    wsCarga.Cells(lastRow, "G").Value = wsRegistro.Range("CARGO").Value
+    wsCarga.Cells(lastRow, "H").Value = wsRegistro.Range("JARDIN").Value
+    wsCarga.Cells(lastRow, "I").Value = wsRegistro.Range("CORREO").Value
+    wsCarga.Cells(lastRow, "J").Value = wsRegistro.Range("FONO").Value
+    wsCarga.Cells(lastRow, "K").Value = wsRegistro.Range("_5_K").Value
+    wsCarga.Cells(lastRow, "L").Value = wsRegistro.Range("_11_K").Value
+    wsCarga.Cells(lastRow, "M").Value = wsRegistro.Range("_15_K").Value
+    wsCarga.Cells(lastRow, "N").Value = wsRegistro.Range("_45_K").Value
+    wsCarga.Cells(lastRow, "O").Value = wsRegistro.Range("MONTO").Value
+    wsCarga.Cells(lastRow, "P").Value = wsRegistro.Range("USUARIO").Value
+    wsCarga.Cells(lastRow, "Q").Value = wsRegistro.Range("OBSERVACIONES").Value
+    wsCarga.Cells(lastRow, "R").Value = Now() ' Fecha y hora actual
     
     ' Limpiar los campos en la hoja REGISTRO
     wsRegistro.Range("REGION,COMUNA,RUT,NOMBRES,APELLIDO_PATERNO,APELLIDO_MATERNO,CARGO,JARDIN,CORREO,FONO,UNIDAD,MONTO,_5_K,_11_K,_15_K,_45_K").ClearContents
@@ -215,14 +215,14 @@ Sub UpdateGoogleSheet()
     ThisWorkbook.RefreshAll
 End Sub
 
-' Subrutina para limpiar la hoja CONSUMO
-Sub LimpiarConsumo()
+' Subrutina para limpiar la hoja CARGAS
+Sub LimpiarCarga()
     Dim ws As Worksheet
     Dim lastRow As Long
     Dim response As VbMsgBoxResult
     
     ' Establecer la hoja de trabajo
-    Set ws = ThisWorkbook.Worksheets("CONSUMO")
+    Set ws = ThisWorkbook.Worksheets("CARGAS")
     
     ' Encontrar la última fila con datos en la columna A
     lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
@@ -246,3 +246,4 @@ Sub LimpiarConsumo()
         MsgBox "No hay filas para eliminar a partir de la fila 4.", vbInformation
     End If
 End Sub
+
