@@ -1,0 +1,248 @@
+' Función para validar RUT chileno
+Function ValidarRUTChileno(rutCompleto As String) As Boolean
+    Dim rut As String, dv As String
+    Dim suma As Long, multiplicador As Integer
+    Dim i As Integer, dvCalculado As String
+    
+    ' Eliminar puntos y guión del RUT
+    rut = Replace(Replace(rutCompleto, ".", ""), "-", "")
+    
+    ' Verificar longitud mínima
+    If Len(rut) < 2 Then
+        ValidarRUTChileno = False
+        Exit Function
+    End If
+    
+    ' Separar el número del dígito verificador
+    dv = Right(rut, 1)
+    rut = Left(rut, Len(rut) - 1)
+    
+    ' Calcular dígito verificador
+    suma = 0
+    multiplicador = 2
+    For i = Len(rut) To 1 Step -1
+        suma = suma + (CLng(Mid(rut, i, 1)) * multiplicador)
+        multiplicador = multiplicador + 1
+        If multiplicador > 7 Then multiplicador = 2
+    Next i
+    
+    dvCalculado = CStr(11 - (suma Mod 11))
+    
+    Select Case dvCalculado
+        Case "10"
+            dvCalculado = "K"
+        Case "11"
+            dvCalculado = "0"
+    End Select
+    
+    ' Comparar dígito verificador calculado con el proporcionado
+    ValidarRUTChileno = (UCase(dv) = dvCalculado)
+End Function
+
+' Subrutina para ir a la hoja BASE DATOS
+Sub IrBaseDatos()
+    On Error Resume Next
+    Sheets("BASE DATOS").Select
+    If Err.Number <> 0 Then
+        MsgBox "No se pudo encontrar la hoja 'BASE DE DATOS'.", vbExclamation, "Error"
+    End If
+    On Error GoTo 0
+End Sub
+
+' Subrutina para ir a la hoja REGISTRO
+Sub IrRegistro()
+    On Error Resume Next
+    Sheets("REGISTRO").Select
+    If Err.Number <> 0 Then
+        MsgBox "No se pudo encontrar la hoja 'REGISTRO'.", vbExclamation, "Error"
+    End If
+    On Error GoTo 0
+End Sub
+
+' Subrutina para ir a la hoja CONSUMO
+Sub IrConsumo()
+    On Error Resume Next
+    Sheets("CONSUMO").Select
+    If Err.Number <> 0 Then
+        MsgBox "No se pudo encontrar la hoja 'CONSUMO'.", vbExclamation, "Error"
+    End If
+    On Error GoTo 0
+End Sub
+
+' Subrutina para grabar datos
+Sub Grabar()
+    Dim wsRegistro As Worksheet, wsConsumo As Worksheet
+    Dim lastRow As Long, i As Long
+    Dim rut As String, rutValido As Boolean
+    Dim foundCell As Range
+    
+    ' Definir las hojas de trabajo
+    Set wsRegistro = ThisWorkbook.Worksheets("REGISTRO")
+    Set wsConsumo = ThisWorkbook.Worksheets("CONSUMO")
+    
+    ' Obtener y validar el RUT del registro actual
+    rut = wsRegistro.Range("RUT").Value
+    rutValido = ValidarRUTChileno(rut)
+    If Not rutValido Then
+        MsgBox "El rut ingresado no es válido.", vbExclamation, "Error"
+        Exit Sub
+    End If
+    
+    ' Buscar si el RUT ya existe en la hoja CONSUMO
+    Set foundCell = wsConsumo.Range("A:A").Find(What:=rut, LookIn:=xlValues, LookAt:=xlWhole)
+    
+    ' Si se encuentra el RUT, eliminar la fila existente
+    If Not foundCell Is Nothing Then
+        foundCell.EntireRow.Delete
+    End If
+    
+    ' Encontrar la última fila en la hoja CONSUMO
+    lastRow = wsConsumo.Cells(wsConsumo.Rows.Count, "A").End(xlUp).Row + 1
+    
+    ' Copiar los valores de REGISTRO a CONSUMO
+    wsConsumo.Cells(lastRow, "A").Value = wsRegistro.Range("RUT").Value
+    wsConsumo.Cells(lastRow, "B").Value = wsRegistro.Range("NOMBRES").Value
+    wsConsumo.Cells(lastRow, "C").Value = wsRegistro.Range("APELLIDO_PATERNO").Value
+    wsConsumo.Cells(lastRow, "D").Value = wsRegistro.Range("APELLIDO_MATERNO").Value
+    wsConsumo.Cells(lastRow, "E").Value = wsRegistro.Range("REGION").Value
+    wsConsumo.Cells(lastRow, "F").Value = wsRegistro.Range("COMUNA").Value
+    wsConsumo.Cells(lastRow, "G").Value = wsRegistro.Range("CARGO").Value
+    wsConsumo.Cells(lastRow, "H").Value = wsRegistro.Range("JARDIN").Value
+    wsConsumo.Cells(lastRow, "I").Value = wsRegistro.Range("CORREO").Value
+    wsConsumo.Cells(lastRow, "J").Value = wsRegistro.Range("FONO").Value
+    wsConsumo.Cells(lastRow, "K").Value = wsRegistro.Range("_5_K").Value
+    wsConsumo.Cells(lastRow, "L").Value = wsRegistro.Range("_11_K").Value
+    wsConsumo.Cells(lastRow, "M").Value = wsRegistro.Range("_15_K").Value
+    wsConsumo.Cells(lastRow, "N").Value = wsRegistro.Range("_45_K").Value
+    wsConsumo.Cells(lastRow, "O").Value = wsRegistro.Range("MONTO").Value
+    wsConsumo.Cells(lastRow, "P").Value = wsRegistro.Range("USUARIO").Value
+    wsConsumo.Cells(lastRow, "Q").Value = wsRegistro.Range("OBSERVACIONES").Value
+    wsConsumo.Cells(lastRow, "R").Value = Now() ' Fecha y hora actual
+    
+    ' Limpiar los campos en la hoja REGISTRO
+    wsRegistro.Range("REGION,COMUNA,RUT,NOMBRES,APELLIDO_PATERNO,APELLIDO_MATERNO,CARGO,JARDIN,CORREO,FONO,UNIDAD,MONTO,_5_K,_11_K,_15_K,_45_K").ClearContents
+    wsRegistro.Range("OBSERVACIONES").Value = ""
+    
+    MsgBox "Registro completado con éxito.", vbInformation
+End Sub
+
+' Subrutina para limpiar campos de registro
+Sub Nuevo()
+    Dim controlNames As Variant
+    Dim wsRegistro As Worksheet
+    Set wsRegistro = ThisWorkbook.Sheets("REGISTRO")
+    controlNames = Array("REGION", "COMUNA", "RUT", "NOMBRES", "APELLIDO_PATERNO", "APELLIDO_MATERNO", "CARGO", "JARDIN", "CORREO", "FONO", "UNIDAD", "MONTO", "_5_K", "_11_K", "_15_K", "_45_K", "OBSERVACIONES")
+    For i = 0 To UBound(controlNames)
+        On Error Resume Next
+        wsRegistro.Range(controlNames(i)).Value = ""
+        On Error GoTo 0
+    Next i
+End Sub
+
+' Subrutina para buscar un registro por RUT
+Sub Buscar()
+    Dim wsData As Worksheet, wsRegistro As Worksheet
+    Dim rut As String, rutColumn As Range, foundCell As Range
+    Dim lastRow As Long, i As Integer
+    Dim columnNames As Variant
+    
+    ' Definir los nombres de las columnas
+    columnNames = Array("REGION", "COMUNA", "RUT", "NOMBRES", "APELLIDO_PATERNO", "APELLIDO_MATERNO", "CARGO", "JARDIN", "CORREO", "FONO")
+    
+    ' Intentar seleccionar las hojas
+    On Error Resume Next
+    Set wsData = ThisWorkbook.Sheets("BASE DATOS")
+    Set wsRegistro = ThisWorkbook.Sheets("REGISTRO")
+    On Error GoTo 0
+    
+    ' Verificar si las hojas existen
+    If wsData Is Nothing Then
+        MsgBox "No se encontró la hoja 'BASE DE DATOS'.", vbExclamation, "Error"
+        Exit Sub
+    End If
+    
+    If wsRegistro Is Nothing Then
+        MsgBox "No se encontró la hoja 'REGISTRO'.", vbExclamation, "Error"
+        Exit Sub
+    End If
+    
+    ' Mostrar ventana de entrada personalizada
+    rut = InputBox("Ingrese el RUT a buscar:", "Buscar RUT")
+    
+    ' Validar entrada
+    If rut = "" Then
+        MsgBox "No se ingresó ningún RUT. Búsqueda cancelada.", vbInformation, "Cancelado"
+        Exit Sub
+    End If
+    
+    ' Encontrar la columna RUT
+    Set rutColumn = wsData.Rows(2).Find("RUT", LookIn:=xlValues, LookAt:=xlWhole)
+        
+    If rutColumn Is Nothing Then
+        MsgBox "No se encontró la columna 'RUT' en la hoja BASE DE DATOS.", vbExclamation, "Error"
+        Exit Sub
+    End If
+    
+    ' Buscar el RUT en la columna
+    lastRow = wsData.Cells(wsData.Rows.Count, rutColumn.Column).End(xlUp).Row
+    Set foundCell = wsData.Range(wsData.Cells(2, rutColumn.Column), wsData.Cells(lastRow, rutColumn.Column)).Find(rut, LookIn:=xlValues, LookAt:=xlWhole)
+    
+    ' Mostrar resultado y llenar campos
+    If Not foundCell Is Nothing Then
+        ' Llenar los campos en la hoja REGISTRO
+        For i = 0 To UBound(columnNames)
+            On Error Resume Next
+            wsRegistro.Range(columnNames(i)).Value = wsData.Cells(foundCell.Row, wsData.Rows(2).Find(columnNames(i), LookIn:=xlValues, LookAt:=xlWhole).Column).Value
+            
+            If Err.Number <> 0 Then
+                MsgBox "Error al llenar el campo '" & columnNames(i) & "'. Asegúrese de que el control existe en la hoja REGISTRO.", vbExclamation, "Error"
+            End If
+            On Error GoTo 0
+        Next i
+    Else
+        MsgBox "No se encontró el RUT especificado.", vbInformation, "No encontrado"
+        ' Limpiar los campos en la hoja REGISTRO
+        For i = 0 To UBound(columnNames)
+            On Error Resume Next
+            wsRegistro.Range(columnNames(i)).Value = ""
+            On Error GoTo 0
+        Next i
+    End If
+End Sub
+
+' Subrutina para actualizar la hoja de Google
+Sub UpdateGoogleSheet()
+    ThisWorkbook.RefreshAll
+End Sub
+
+' Subrutina para limpiar la hoja CONSUMO
+Sub LimpiarConsumo()
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim response As VbMsgBoxResult
+    
+    ' Establecer la hoja de trabajo
+    Set ws = ThisWorkbook.Worksheets("CONSUMO")
+    
+    ' Encontrar la última fila con datos en la columna A
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    
+    ' Verificar si hay filas para eliminar
+    If lastRow >= 4 Then
+        ' Mensaje de confirmación
+        response = MsgBox("¿Está seguro de que desea eliminar todas las filas desde la fila 4 hasta la fila " & lastRow & "?" & vbNewLine & _
+                          "Esta acción no se puede deshacer.", vbYesNo + vbExclamation, "Confirmar eliminación")
+        
+        ' Proceder solo si el usuario confirma
+        If response = vbYes Then
+            ' Eliminar las filas desde la 4 hasta la última
+            ws.Rows("4:" & lastRow).Delete
+            
+            MsgBox "Se han eliminado las filas desde la 4 hasta la " & lastRow & ".", vbInformation
+        Else
+            MsgBox "Operación cancelada. No se han eliminado filas.", vbInformation
+        End If
+    Else
+        MsgBox "No hay filas para eliminar a partir de la fila 4.", vbInformation
+    End If
+End Sub
